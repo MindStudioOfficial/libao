@@ -15,17 +15,17 @@ class Device {
 
 class _Info extends Struct {
   @Int32()
-  int? type;
+  external int? type;
   external Pointer<Utf8> name;
   external Pointer<Utf8> shortName;
   external Pointer<Utf8> comment;
   @Int32()
-  int? byteFormat;
+  external int? byteFormat;
   @Int32()
-  int? priority;
-  Pointer<Pointer<Utf8>>? options;
+  external int? priority;
+  external Pointer<Pointer<Utf8>>? options;
   @Int32()
-  int? optionCount;
+  external int? optionCount;
 }
 
 /// Holds the attributes of an output driver
@@ -64,20 +64,20 @@ class Info {
 
 class _SampleFormat extends Struct {
   @Int32()
-  int? bits;
+  external int? bits;
   @Int32()
-  int? rate;
+  external int? rate;
   @Int32()
-  int? channels;
+  external int? channels;
   @Int32()
-  int? byteFormat;
-  Pointer<Utf8>? matrix;
+  external int? byteFormat;
+  external Pointer<Utf8>? matrix;
 }
 
 class _Option extends Struct {
-  Pointer<Utf8>? key;
-  Pointer<Utf8>? value;
-  Pointer<_Option>? next;
+  external Pointer<Utf8>? key;
+  external Pointer<Utf8>? value;
+  external Pointer<_Option>? next;
 }
 
 typedef _InitializeNative = Void Function();
@@ -95,33 +95,21 @@ typedef _DefaultDriverId = int Function();
 typedef _DriverInfoNative = Pointer<_Info> Function(Int32 driverId);
 typedef _DriverInfo = Pointer<_Info> Function(int driverId);
 
-typedef _DriverInfoListNative = Pointer<Pointer<_Info>> Function(
-    Pointer<Int32> count);
-typedef _DriverInfoList = Pointer<Pointer<_Info>> Function(
-    Pointer<Int32> driverId);
+typedef _DriverInfoListNative = Pointer<Pointer<_Info>> Function(Pointer<Int32> count);
+typedef _DriverInfoList = Pointer<Pointer<_Info>> Function(Pointer<Int32> driverId);
 
-typedef _OpenLiveNative = Pointer<_Device> Function(Int32 driverId,
-    Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
-typedef _OpenLive = Pointer<_Device> Function(int driverId,
-    Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
+typedef _OpenLiveNative = Pointer<_Device> Function(
+    Int32 driverId, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
+typedef _OpenLive = Pointer<_Device> Function(
+    int driverId, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
 
-typedef _OpenFileNative = Pointer<_Device> Function(
-    Int32 driverId,
-    Pointer<Utf8> filename,
-    Int32 overwrite,
-    Pointer<_SampleFormat> sampleFormat,
-    Pointer<_Option> options);
+typedef _OpenFileNative = Pointer<_Device> Function(Int32 driverId, Pointer<Utf8> filename, Int32 overwrite,
+    Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
 typedef _OpenFile = Pointer<_Device> Function(
-    int driverId,
-    Pointer<Utf8> filename,
-    int overwrite,
-    Pointer<_SampleFormat> sampleFormat,
-    Pointer<_Option> options);
+    int driverId, Pointer<Utf8> filename, int overwrite, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
 
-typedef _PlayNative = Int32 Function(
-    Pointer<_Device> device, Pointer<Int8> samples, Int32 length);
-typedef _Play = int Function(
-    Pointer<_Device> device, Pointer<Int8> samples, int length);
+typedef _PlayNative = Int32 Function(Pointer<_Device> device, Pointer<Int8> samples, Int32 length);
+typedef _Play = int Function(Pointer<_Device> device, Pointer<Int8> samples, int length);
 
 typedef _CloseNative = Int32 Function(Pointer<_Device> device);
 typedef _Close = int Function(Pointer<_Device> device);
@@ -172,22 +160,16 @@ class Libao {
   late _Close _close;
 
   Libao._(this._lib) {
-    _initialize =
-        _lib.lookupFunction<_InitializeNative, _Initialize>('ao_initialize');
+    _initialize = _lib.lookupFunction<_InitializeNative, _Initialize>('ao_initialize');
 
     _shutdown = _lib.lookupFunction<_ShutdownNative, _Shutdown>('ao_shutdown');
     _driverId = _lib.lookupFunction<_DriverIdNative, _DriverId>('ao_driver_id');
 
-    _defaultDriverId =
-        _lib.lookupFunction<_DefaultDriverIdNative, _DefaultDriverId>(
-            'ao_default_driver_id');
+    _defaultDriverId = _lib.lookupFunction<_DefaultDriverIdNative, _DefaultDriverId>('ao_default_driver_id');
 
-    _driverInfo =
-        _lib.lookupFunction<_DriverInfoNative, _DriverInfo>('ao_driver_info');
+    _driverInfo = _lib.lookupFunction<_DriverInfoNative, _DriverInfo>('ao_driver_info');
 
-    _driverInfoList =
-        _lib.lookupFunction<_DriverInfoListNative, _DriverInfoList>(
-            'ao_driver_info_list');
+    _driverInfoList = _lib.lookupFunction<_DriverInfoListNative, _DriverInfoList>('ao_driver_info_list');
 
     _openLive = _lib.lookupFunction<_OpenLiveNative, _OpenLive>('ao_open_live');
     _openFile = _lib.lookupFunction<_OpenFileNative, _OpenFile>('ao_open_file');
@@ -288,9 +270,7 @@ class Libao {
     sampleFormat.ref.byteFormat = _byteFormatToInt(byteFormat);
     if (matrix != null) sampleFormat.ref.matrix = matrix.toNativeUtf8();
 
-    final device =
-        _openFile(driverId, filename.toNativeUtf8(), 1, sampleFormat, nullptr)
-            .address;
+    final device = _openFile(driverId, filename.toNativeUtf8(), 1, sampleFormat, nullptr).address;
 
     calloc.free(sampleFormat);
 
