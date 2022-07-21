@@ -1,24 +1,40 @@
+import 'dart:ffi';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:ffi/ffi.dart';
 
 import 'package:libao/libao.dart';
 
 void main() {
-  final ao = Libao.open();
+  final ao = Libao.open('../bin/libao.dll');
 
   ao.initialize();
 
   final driverId = ao.defaultDriverId();
 
-  print(ao.driverInfo(driverId));
-
   const bits = 16;
   const channels = 2;
   const rate = 44100;
 
+  final options = calloc<AoOption>();
+  options.ref.key = 'id'.toNativeUtf8();
+  options.ref.value = '0'.toNativeUtf8();
+  options.ref.next = nullptr;
+
+  ao.appendOption(options, 'debug', '');
+
   final device = ao.openLive(
     driverId,
+    options: options,
   );
+
+  ao.freeOptions(options);
+
+  if (!device.initialized) {
+    print('ERROR Opening the device');
+    ao.shutdown();
+    return;
+  }
 
   const volume = 0.5;
   const freq = 440.0;
