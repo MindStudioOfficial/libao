@@ -11,6 +11,16 @@ class Device {
   final Pointer<_Device> _device;
 
   Device._(this._device);
+
+  /// checkes whether the device has been successfully initialized or is NULL due to an ERROR
+  ///
+  /// ```dart
+  /// final device = ao.openLive(driverId, options:options);
+  /// if(!device.initialized) {
+  ///   // an error occured
+  /// }
+  /// ```
+  bool get initialized => _device.address != 0;
 }
 
 class _Info extends Struct {
@@ -74,10 +84,17 @@ class _SampleFormat extends Struct {
   external Pointer<Utf8>? matrix;
 }
 
-class _Option extends Struct {
+/// A linked list element holding the Key-Value pair of a driver option
+class AoOption extends Struct {
+  /// The Key of the Key-Value Pair
   external Pointer<Utf8>? key;
+
+  /// The Value of the Key-Value Pair
   external Pointer<Utf8>? value;
-  external Pointer<_Option>? next;
+
+  /// The Pointer to the next element in the linked list
+  /// nullptr if this is the last element in the list
+  external Pointer<AoOption>? next;
 }
 
 typedef _InitializeNative = Void Function();
@@ -99,20 +116,27 @@ typedef _DriverInfoListNative = Pointer<Pointer<_Info>> Function(Pointer<Int32> 
 typedef _DriverInfoList = Pointer<Pointer<_Info>> Function(Pointer<Int32> driverId);
 
 typedef _OpenLiveNative = Pointer<_Device> Function(
-    Int32 driverId, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
+    Int32 driverId, Pointer<_SampleFormat> sampleFormat, Pointer<AoOption> options);
 typedef _OpenLive = Pointer<_Device> Function(
-    int driverId, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
+    int driverId, Pointer<_SampleFormat> sampleFormat, Pointer<AoOption> options);
 
 typedef _OpenFileNative = Pointer<_Device> Function(Int32 driverId, Pointer<Utf8> filename, Int32 overwrite,
-    Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
-typedef _OpenFile = Pointer<_Device> Function(
-    int driverId, Pointer<Utf8> filename, int overwrite, Pointer<_SampleFormat> sampleFormat, Pointer<_Option> options);
+    Pointer<_SampleFormat> sampleFormat, Pointer<AoOption> options);
+typedef _OpenFile = Pointer<_Device> Function(int driverId, Pointer<Utf8> filename, int overwrite,
+    Pointer<_SampleFormat> sampleFormat, Pointer<AoOption> options);
 
 typedef _PlayNative = Int32 Function(Pointer<_Device> device, Pointer<Int8> samples, Int32 length);
 typedef _Play = int Function(Pointer<_Device> device, Pointer<Int8> samples, int length);
 
 typedef _CloseNative = Int32 Function(Pointer<_Device> device);
 typedef _Close = int Function(Pointer<_Device> device);
+
+typedef _FreeOptionsNative = Void Function(Pointer<AoOption> options);
+typedef _FreeOptions = void Function(Pointer<AoOption> options);
+
+typedef _AppendOptionNative = Int32 Function(
+    Pointer<Pointer<AoOption>> options, Pointer<Utf8> key, Pointer<Utf8> value);
+typedef _AppendOption = int Function(Pointer<Pointer<AoOption>> options, Pointer<Utf8> key, Pointer<Utf8> value);
 
 /// The output type of the driver.
 enum OutputType {
@@ -158,6 +182,8 @@ class Libao {
   late _OpenFile _openFile;
   late _Play _play;
   late _Close _close;
+  late _FreeOptions _freeOptions;
+  late _AppendOption _appendOption;
 
   Libao._(this._lib) {
     _initialize = _lib.lookupFunction<_InitializeNative, _Initialize>('ao_initialize');
@@ -175,6 +201,8 @@ class Libao {
     _openFile = _lib.lookupFunction<_OpenFileNative, _OpenFile>('ao_open_file');
     _play = _lib.lookupFunction<_PlayNative, _Play>('ao_play');
     _close = _lib.lookupFunction<_CloseNative, _Close>('ao_close');
+    _freeOptions = _lib.lookupFunction<_FreeOptionsNative, _FreeOptions>('ao_free_options');
+    _appendOption = _lib.lookupFunction<_AppendOptionNative, _AppendOption>('ao_append_option');
   }
 
   /// Loads the libao library.
@@ -237,6 +265,7 @@ class Libao {
     int channels = 2,
     ByteFormat byteFormat = ByteFormat.little,
     String? matrix,
+    Pointer<AoOption>? options,
   }) {
     final sampleFormat = calloc<_SampleFormat>();
     sampleFormat.ref.bits = bits;
@@ -245,7 +274,7 @@ class Libao {
     sampleFormat.ref.byteFormat = _byteFormatToInt(byteFormat);
     if (matrix != null) sampleFormat.ref.matrix = matrix.toNativeUtf8();
 
-    final device = _openLive(driverId, sampleFormat, nullptr).address;
+    final device = _openLive(driverId, sampleFormat, options ?? nullptr).address;
 
     calloc.free(sampleFormat);
 
@@ -298,4 +327,18 @@ class Libao {
 
   /// Closes the audio device and frees the memory allocated by the device.
   bool close(Device device) => _close(device._device) != 0;
+
+  /// Free all of the memory allocated to an option list, including the key and value strings.
+  void freeOptions(Pointer<AoOption> options) {
+    _freeOptions(options);
+  }
+
+  /// Append a key-value pair to a linked list of options.
+  /// The key and value strings are duplicated into newly allocated memory, so the calling function retains ownership of the string parameters.
+  /// returns true if successfull
+  bool appendOption(Pointer<AoOption> options, String key, String value) {
+    final optionsPtr = calloc<Pointer<AoOption>>();
+    optionsPtr.value = Pointer.fromAddress(options.address);
+    return _appendOption(optionsPtr, key.toNativeUtf8(), value.toNativeUtf8()) == 1;
+  }
 }
