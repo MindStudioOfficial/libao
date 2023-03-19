@@ -25,17 +25,17 @@ class Device {
 
 class _Info extends Struct {
   @Int32()
-  external int? type;
+  external int type;
   external Pointer<Utf8> name;
   external Pointer<Utf8> shortName;
   external Pointer<Utf8> comment;
   @Int32()
-  external int? byteFormat;
+  external int byteFormat;
   @Int32()
-  external int? priority;
-  external Pointer<Pointer<Utf8>>? options;
+  external int priority;
+  external Pointer<Pointer<Utf8>> options;
   @Int32()
-  external int? optionCount;
+  external int optionCount;
 }
 
 /// Holds the attributes of an output driver
@@ -74,27 +74,27 @@ class Info {
 
 class _SampleFormat extends Struct {
   @Int32()
-  external int? bits;
+  external int bits;
   @Int32()
-  external int? rate;
+  external int rate;
   @Int32()
-  external int? channels;
+  external int channels;
   @Int32()
-  external int? byteFormat;
-  external Pointer<Utf8>? matrix;
+  external int byteFormat;
+  external Pointer<Utf8> matrix;
 }
 
 /// A linked list element holding the Key-Value pair of a driver option
 class AoOption extends Struct {
   /// The Key of the Key-Value Pair
-  external Pointer<Utf8>? key;
+  external Pointer<Utf8> key;
 
   /// The Value of the Key-Value Pair
-  external Pointer<Utf8>? value;
+  external Pointer<Utf8> value;
 
   /// The Pointer to the next element in the linked list
   /// nullptr if this is the last element in the list
-  external Pointer<AoOption>? next;
+  external Pointer<AoOption> next;
 }
 
 typedef _InitializeNative = Void Function();
